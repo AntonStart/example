@@ -8,9 +8,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Server {
-
+    // Карта класса сервер хранит имя клиента и его подключение
     private static Map<String, Connection> connectionMap = new ConcurrentHashMap<>();
-
+    // метод отправляет сообщение для всех участников в чате (широковещательное сообщение)
     public static void sendBroadcastMessage(Message message) {
         for (Connection connection : connectionMap.values()) {
             try {
@@ -20,8 +20,16 @@ public class Server {
             }
         }
     }
-
+    // внутренний класс ОБРАБОТЧИК
     private static class Handler extends Thread{
+
+        private Socket socket;
+        // run()
+        //1 выводит в консоль сообщение об установленном соединении
+        //2 создаёт объект класса Соединение на основе сокета
+        //3 знакомит сервер и клиента через метод рукопожатия serverHandshake(connection)
+        //4 отправляет сообщение всем участникам чата о присоединении нового участника
+        //
         @Override
         public void run() {
             ConsoleHelper.writeMessage("A connection to a remote address has been established" + socket.getRemoteSocketAddress());
@@ -37,10 +45,13 @@ public class Server {
             }
         }
 
-        private Socket socket;
+        // конструктор с объявлением socket'а
         public Handler(Socket socket) {
             this.socket = socket;
         }
+
+        // метод рукопожатие сервера и участника
+        //
         private String serverHandshake(Connection connection) throws IOException, ClassNotFoundException {
             while (true) {
                 connection.send(new Message(MessageType.NAME_REQUEST, "Введите имя:"));
@@ -57,7 +68,7 @@ public class Server {
                 }
             }
         }
-
+        // метод - уведомить пользователей
         private void notifyUsers(Connection connection, String userName) throws IOException{
             Iterator<Map.Entry<String, Connection>> itr = connectionMap.entrySet().iterator();
             while (itr.hasNext()) {
